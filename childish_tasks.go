@@ -62,6 +62,31 @@ func getPrimes(n int) []int {
 	return primes
 }
 
+func reverse(s string) string {
+	rs := []rune(s)
+	var rev []rune
+	for i := len(rs) - 1; i >= 0; i-- {
+		rev = append(rev, rs[i])
+	}
+	return string(rev)
+}
+
+func arrSum(arr []int) int {
+	var ans int
+	for _, v := range arr {
+		ans += v
+	}
+	return ans
+}
+
+type Rectangle struct {
+	length, height int
+}
+
+func (r Rectangle) getArea() int {
+	return r.height * r.length
+}
+
 func main() {
 	var a, b, c, n int = 100, 200, 500, 6
 	fmt.Println("1. Привет, мир!")
@@ -88,4 +113,14 @@ func main() {
 	primes := getPrimes(n)
 	fmt.Println("Простые до числа", n, ":", primes)
 
+	fmt.Println("8. Строка и ее перевертыш")
+	fmt.Println(reverse("8. Строка и ее перевертыш"))
+
+	fmt.Println("9. Массив и его сумма")
+	arr := []int{1, 6, 3, 4}
+	fmt.Println(arrSum(arr))
+
+	fmt.Println("10. Структуры и методы")
+	rec := Rectangle{5, 5}
+	fmt.Println(rec.getArea())
 }
