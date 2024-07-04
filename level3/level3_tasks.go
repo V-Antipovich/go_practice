@@ -103,6 +103,95 @@ func merge(a, b []int) []int {
 	return merged
 }
 
+const (
+	mod = 1e9 + 7
+	x   = 314
+)
+
+func Pow(a, n, m int) int {
+	if n == 0 {
+		return 1
+	} else if n%2 == 0 {
+		b := Pow(a, n/2, m) % m
+		return (b * b) % m
+	} else {
+		return (Pow(a, n-1, m) % m * a % m) % m
+	}
+}
+
+func h(s *string) int {
+	hsh := 0
+	for i, c := range *s {
+		hsh = (hsh%mod + ((int(c)%mod)*(Pow(x, i, mod)%mod))%mod) % mod
+	}
+	return hsh
+}
+
+type pair struct {
+	s string
+	n int
+}
+
+type HashMap struct {
+	table [][]pair
+}
+
+func (hm *HashMap) Insert(key string, val int) {
+	hval := h(&key)
+	// hm.table[hval] = append(hm.table[hval], pair{s: key, n: val})
+	for i, v := range hm.table[hval] {
+		if v.s == key {
+			hm.table[hval][i].n = val
+			return
+		}
+	}
+	hm.table[hval] = append(hm.table[hval], pair{s: key, n: val})
+}
+
+// 0 is defaul value for int
+func (hm *HashMap) Get(key string) int {
+	hval := h(&key)
+	val := 0
+	for _, v := range hm.table[hval] {
+		if v.s == key {
+			val = v.n
+			break
+		}
+	}
+	return val
+}
+
+func (hm *HashMap) Delete(key string) {
+	hval := h(&key)
+	for i, v := range hm.table[hval] {
+		if v.s == key {
+			hm.table[hval] = append(hm.table[hval][:i], hm.table[hval][i+1:]...)
+			break
+		}
+	}
+}
+
+func make_hashmap(m int) HashMap {
+	return HashMap{table: make([][]pair, m)}
+}
+
+func BinSearch(a []int, n int) int {
+	L, R, m := 0, len(a), 0
+	for L+1 < R {
+		m = (L + R) / 2
+		if a[m] > n {
+			R = m
+		} else {
+			L = m
+		}
+	}
+	if a[L] == n {
+		return L
+	} else {
+		return -1
+	}
+}
+
 type Stack struct {
 	arr []int
 }
@@ -197,6 +286,20 @@ func main() {
 	fmt.Println(c)
 
 	fmt.Println("28. Хэш-таблица с коллизиями")
+	// Разрешение цепочками
+	ht := make_hashmap(mod) //
+	ht.Insert("asb", 5)
+	ht.Insert("adr", 4)
+	ht.Insert("aeq", 3)
+	fmt.Println(ht.Get("ade"))
+	fmt.Println(ht.Get("adr"))
+	ht.Delete("asb")
+	fmt.Println(ht.Get("asb"))
+
+	fmt.Println("29. Бинарный поиск")
+	// -1 если нет, иначе индекс элемента
+	arr2 := []int{1, 1, 2, 3, 5, 6, 6, 6, 7, 8, 11, 12, 13}
+	fmt.Println(BinSearch(arr2, 14))
 
 	fmt.Println("30. Очередь на основе двух стеков")
 	q := Queue{
