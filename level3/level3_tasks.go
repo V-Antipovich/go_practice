@@ -2,7 +2,85 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
+
+func RemoveDuplicates(a []int) []int {
+	were := make(map[int]bool)
+	b := []int{}
+	for _, v := range a {
+		if !were[v] {
+			b = append(b, v)
+		}
+		were[v] = true
+	}
+	return b
+}
+
+func BubbleSort(a []int) []int {
+	for i := 0; i < len(a); i++ {
+		for j := 0; j < len(a)-1; j++ {
+			if a[j] > a[j+1] {
+				a[j], a[j+1] = a[j+1], a[j]
+			}
+		}
+	}
+	return a
+}
+
+func Fib(n int) {
+	f0, f1, f2 := 1, 1, 0
+	if n >= 1 {
+		fmt.Println(f0)
+	}
+	if n >= 2 {
+		fmt.Println(f1)
+	}
+	for i := 2; i < n; i++ {
+		f2 = f0 + f1
+		fmt.Println(f2)
+		f0, f1 = f1, f2
+	}
+}
+
+func CountOccurrencies(a []int, n int) int {
+	cnt := 0
+	for _, v := range a {
+		if v == n {
+			cnt += 1
+		}
+	}
+	return cnt
+}
+
+func ArrayIntersection(a, b []int) []int {
+	were := make(map[int]int)
+	c := []int{}
+	for _, v := range a {
+		were[v] += 1
+	}
+	for _, v := range b {
+		if were[v] > 0 {
+			c = append(c, v)
+			were[v] -= 1
+		}
+	}
+	return c
+}
+
+func AreAnagrams(a, b string) bool {
+	a = strings.ToLower(a)
+	b = strings.ToLower(b)
+	if len(a) != len(b) {
+		return false
+	}
+	for i := 0; i < len(a); i++ {
+		if a[i] != b[len(b)-1-i] {
+			return false
+		}
+	}
+	return true
+}
 
 func merge(a, b []int) []int {
 	merged := []int{}
@@ -92,6 +170,26 @@ func (q *Queue) Pop() int {
 }
 
 func main() {
+	arr := []int{4, 6, 1, 8, 3, 2, 1, 4, 3, 4, 4, 10, 12, 35, -1}
+	fmt.Println("21. Удаление дубликатов")
+	fmt.Println(RemoveDuplicates(arr))
+
+	fmt.Println("22. Сортировка пузырьком")
+	fmt.Println(BubbleSort(arr))
+
+	fmt.Println("23. Фибоначчиева последовательность")
+	Fib(10)
+
+	fmt.Println("24. Количество вхождений элемента в массив")
+	fmt.Println(CountOccurrencies(arr, -2))
+
+	fmt.Println("25. Пересечение двух массивов")
+	arr1 := []int{4, 6, 1, 8, 3, 2, 4, 3, 4, 4, 10, 12, 35}
+	fmt.Println(ArrayIntersection(arr, arr1))
+
+	fmt.Println("26. Анаграмма")
+	fmt.Println(AreAnagrams("asSd)@", "@)dPssa"))
+
 	fmt.Println("27. Слияние отсортированных массивов")
 	a := []int{5, 115}
 	b := []int{2, 3, 4, 5, 6, 7, 7, 8, 9}
@@ -117,6 +215,4 @@ func main() {
 	for q.Size() > 0 {
 		fmt.Println(q.Pop(), q.Size())
 	}
-	fmt.Println("dsf")
-
 }
