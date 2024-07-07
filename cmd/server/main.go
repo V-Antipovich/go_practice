@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go_prac/accounts"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -8,7 +9,11 @@ import (
 
 func main() {
 	app := fiber.New()
-	// accDB :=
-	// app.Get()
+	accDB := accounts.New()
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Main page")
+	})
+	app.Get("/account", accDB.GetAccount)
+	app.Post("/account/create", accDB.CreateAccount)
 	log.Fatal(app.Listen(":3000"))
 }
