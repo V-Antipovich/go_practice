@@ -1,4 +1,4 @@
-module lvl3
+module go_prac
 
 go 1.21.9
 
