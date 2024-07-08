@@ -2,9 +2,9 @@ package accounts
 
 import (
 	// "fmt"
+	"fmt"
 	"go_prac/accounts/dto"
 	"go_prac/accounts/models"
-	"net/http"
 	"sync"
 
 	"github.com/gofiber/fiber/v2"
@@ -24,15 +24,13 @@ func New() *Handler {
 
 // Создать аккаунт
 func (h *Handler) CreateAccount(c *fiber.Ctx) error {
-	// fmt.Println(c.Query("name"))
 	req := dto.ChangeAccountRequest{}
 	if err := c.BodyParser(&req); err != nil {
-		// return err
 		c.Context().Logger().Printf("error: %s\n", err)
 	}
-
 	h.guard.Lock()
 	// Если имя пустое или уже имеется
+	// fmt.Println(req, req.Name, "q name", c.Query("name"), "q amount", c.Query("amount"))
 	if len(req.Name) == 0 {
 		return c.SendString("Can't have empty name")
 	}
@@ -45,7 +43,7 @@ func (h *Handler) CreateAccount(c *fiber.Ctx) error {
 		Amount: req.Amount,
 	}
 	h.guard.Unlock()
-	return c.SendStatus(http.StatusCreated)
+	return c.SendStatus(fiber.StatusCreated)
 }
 
 // Получить аккаунт
@@ -55,7 +53,7 @@ func (h *Handler) GetAccount(c *fiber.Ctx) error {
 	acc, ok := h.accounts[name]
 	h.guard.RUnlock()
 	if !ok {
-		return c.Status(http.StatusNotFound).SendString("account not found")
+		return c.Status(fiber.StatusNotFound).SendString("account not found")
 	}
 	resp := dto.GetAccountResponse{
 		Name:   acc.Name,
@@ -75,5 +73,20 @@ func (h *Handler) PathAccount(c *fiber.Ctx) error {
 }
 
 func (h *Handler) DeleteAccount(c *fiber.Ctx) error {
-	panic("implement me")
+	// req := new(dto.DeleteAccountRequest)
+	name := c.Params("name")
+	fmt.Println(c.AllParams())
+	// if err := c.BodyParser(req); err != nil {
+	// 	c.Context().Logger().Printf("error: %s\n", err)
+	// }
+	h.guard.Lock()
+	fmt.Println(name)
+	if _, ok := h.accounts[name]; !ok {
+		h.guard.Unlock()
+		return c.SendString(fmt.Sprintf("no such entry: %s", name))
+	}
+	delete(h.accounts, name)
+	h.guard.Unlock()
+	return c.SendStatus(fiber.StatusNoContent)
+	// panic("implement me")
 }

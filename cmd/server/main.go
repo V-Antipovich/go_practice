@@ -15,5 +15,6 @@ func main() {
 	})
 	app.Get("/account", accDB.GetAccount)
 	app.Post("/account/create", accDB.CreateAccount)
+	app.Delete("/account/delete/:name", accDB.DeleteAccount)
 	log.Fatal(app.Listen(":3000"))
 }
