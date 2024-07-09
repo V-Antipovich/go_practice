@@ -67,7 +67,6 @@ func (h *Handler) GetAccount(c *fiber.Ctx) error {
 // Изменить имя аккаунта
 func (h *Handler) ChangeAccount(c *fiber.Ctx) error {
 	req := new(dto.ChangeAccountRequest)
-	fmt.Println(req)
 	if err := c.BodyParser(&req); err != nil {
 		c.Context().Logger().Printf("error: %s\n", err)
 	}
@@ -100,7 +99,6 @@ func (h *Handler) PatchAccount(c *fiber.Ctx) error {
 	h.accounts[req.Name].Amount = req.Amount
 	h.guard.Unlock()
 	return c.SendStatus(fiber.StatusOK)
-	// panic("implement me")
 }
 
 func (h *Handler) DeleteAccount(c *fiber.Ctx) error {
@@ -120,5 +118,4 @@ func (h *Handler) DeleteAccount(c *fiber.Ctx) error {
 	delete(h.accounts, req.Name)
 	h.guard.Unlock()
 	return c.SendStatus(fiber.StatusNoContent)
-	// panic("implement me")
 }
