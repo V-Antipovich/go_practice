@@ -67,6 +67,7 @@ func (h *Handler) GetAccount(c *fiber.Ctx) error {
 // Изменить имя аккаунта
 func (h *Handler) ChangeAccount(c *fiber.Ctx) error {
 	req := new(dto.ChangeAccountRequest)
+	fmt.Println(req)
 	if err := c.BodyParser(&req); err != nil {
 		c.Context().Logger().Printf("error: %s\n", err)
 	}

@@ -17,6 +17,6 @@ func main() {
 	app.Post("/account/create", accDB.CreateAccount)
 	app.Delete("/account/delete", accDB.DeleteAccount)
 	app.Patch("/account/patch", accDB.PatchAccount)
-	app.Post("accounts/change", accDB.ChangeAccount)
+	app.Post("account/change", accDB.ChangeAccount)
 	log.Fatal(app.Listen(":3000"))
 }
