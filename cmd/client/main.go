@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
+	// "github.com/gofiber/fiber/v2/client"
 )
 
 type Command struct {
@@ -97,6 +98,7 @@ func (cmd *Command) getQ() error {
 	if err != nil {
 		return fmt.Errorf("get request failed: %w", err)
 	}
+	fmt.Println(resp.Header)
 	defer func() {
 		_ = resp.Body.Close()
 	}()
@@ -116,13 +118,66 @@ func (cmd *Command) getQ() error {
 }
 
 func (cmd *Command) del() error {
-	agent := fiber.Delete(fmt.Sprintf("http://%s:%d/account/delete/%s", cmd.Host, cmd.Port, cmd.Name))
-	statusCode, agentBody, errs := agent.Bytes()
-	if len(errs) > 0 {
-		return fmt.Errorf("errors: %s", errs)
+	c := &http.Client{}
+	reqBody := dto.DeleteAccountRequest{
+		Name: cmd.Name,
 	}
-	if statusCode == fiber.StatusNoContent {
+
+	data, err := json.Marshal(reqBody)
+	if err != nil {
+		return fmt.Errorf("json marshall failed: %w", err)
+	}
+	req, err := http.NewRequest("DELETE",
+		fmt.Sprintf("http://%s:%d/account/delete", cmd.Host, cmd.Port),
+		bytes.NewReader(data),
+	)
+	if err != nil {
+		fmt.Println("if err != nil ONE")
+		return fmt.Errorf("req issues: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := c.Do(req)
+	if err != nil {
+		fmt.Println("if err != nil TWO")
+		return fmt.Errorf("resp issues: %w", err)
+	}
+	// c := fiber.Client{}
+
+	// fmt.Println("got here")
+
+	// check errors, status codes and io read body
+	if resp.StatusCode == fiber.StatusNoContent {
 		return nil
 	}
-	return fmt.Errorf("response error: %s", string(agentBody))
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("read body failed: %w", err)
+	}
+	// return nil
+	// return fmt.Sprintf("response error %s", string(body))
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	return fmt.Errorf("response error %s", body)
+
+	// resp, err := fiber
+	// resp, err := http.
+	// respBody := fmt.Sprintf("http://%s:%d/account/delete", cmd.Host, cmd.Port)
+	// resp, err := http.Post(
+	// 	fmt.Sprintf("http://%s:%d/account/create", cmd.Host, cmd.Port),
+	// 	"application/json",
+	// 	bytes.NewReader(data),
+	// )
+	// fmt.Println(respBody)
+
+	// agent := fiber.Delete(fmt.Sprintf("http://%s:%d/account/delete/%s", cmd.Host, cmd.Port, cmd.Name))
+	// statusCode, agentBody, errs := agent.Bytes()
+	// if len(errs) > 0 {
+	// 	return fmt.Errorf("errors: %s", errs)
+	// }
+	// if statusCode == fiber.StatusNoContent {
+	// 	return nil
+	// }
+	// return fmt.Errorf("response error: %s", string(agentBody))
 }
