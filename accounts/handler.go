@@ -22,9 +22,11 @@ func New() *Handler {
 	}
 }
 
+// TODO: дублирующийся код
+
 // Создать аккаунт
 func (h *Handler) CreateAccount(c *fiber.Ctx) error {
-	req := dto.ChangeAccountRequest{}
+	req := dto.CreateAccountRequest{}
 	if err := c.BodyParser(&req); err != nil {
 		c.Context().Logger().Printf("error: %s\n", err)
 	}
@@ -64,12 +66,40 @@ func (h *Handler) GetAccount(c *fiber.Ctx) error {
 
 // Изменить имя аккаунта
 func (h *Handler) ChangeAccount(c *fiber.Ctx) error {
-	panic("implement me")
+	req := new(dto.ChangeAccountRequest)
+	if err := c.BodyParser(&req); err != nil {
+		c.Context().Logger().Printf("error: %s\n", err)
+	}
+	h.guard.Lock()
+	if _, ok := h.accounts[req.Name]; !ok {
+		h.guard.Unlock()
+		return c.SendString(fmt.Sprintf("no such entry: %s", req.Name))
+	}
+	amount := h.accounts[req.Name].Amount
+	delete(h.accounts, req.Name)
+	h.accounts[req.NewName] = &models.Account{
+		Name:   req.NewName,
+		Amount: amount,
+	}
+	h.guard.Unlock()
+	return c.SendStatus(fiber.StatusOK)
 }
 
 // Изменить баланс
-func (h *Handler) PathAccount(c *fiber.Ctx) error {
-	panic("implement me")
+func (h *Handler) PatchAccount(c *fiber.Ctx) error {
+	req := new(dto.PatchAccountRequest)
+	if err := c.BodyParser(&req); err != nil {
+		c.Context().Logger().Printf("error: %s\n", err)
+	}
+	h.guard.Lock()
+	if _, ok := h.accounts[req.Name]; !ok {
+		h.guard.Unlock()
+		return c.SendString(fmt.Sprintf("no such entry: %s", req.Name))
+	}
+	h.accounts[req.Name].Amount = req.Amount
+	h.guard.Unlock()
+	return c.SendStatus(fiber.StatusOK)
+	// panic("implement me")
 }
 
 func (h *Handler) DeleteAccount(c *fiber.Ctx) error {
