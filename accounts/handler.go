@@ -1,7 +1,6 @@
 package accounts
 
 import (
-	// "fmt"
 	"fmt"
 	"go_prac/accounts/dto"
 	"go_prac/accounts/models"
@@ -22,23 +21,19 @@ func New() *Handler {
 	}
 }
 
-// TODO: дублирующийся код
-
 // Создать аккаунт
 func (h *Handler) CreateAccount(c *fiber.Ctx) error {
 	req := dto.CreateAccountRequest{}
 	if err := c.BodyParser(&req); err != nil {
-		c.Context().Logger().Printf("error: %s\n", err)
+		return c.SendString(fmt.Sprintf("errors while parsing the request: %s", err))
 	}
-	h.guard.Lock()
-	// Если имя пустое или уже имеется
-	// fmt.Println(req, req.Name, "q name", c.Query("name"), "q amount", c.Query("amount"))
 	if len(req.Name) == 0 {
 		return c.SendString("Can't have empty name")
 	}
+	h.guard.Lock()
 	if _, ok := h.accounts[req.Name]; ok {
 		h.guard.Unlock()
-		return c.SendString("already have")
+		return c.SendString("Account is already present")
 	}
 	h.accounts[req.Name] = &models.Account{
 		Name:   req.Name,
@@ -51,11 +46,14 @@ func (h *Handler) CreateAccount(c *fiber.Ctx) error {
 // Получить аккаунт
 func (h *Handler) GetAccount(c *fiber.Ctx) error {
 	name := c.Query("name")
+	if len(name) == 0 {
+		return c.SendString("Can't have empty name")
+	}
 	h.guard.RLock()
 	acc, ok := h.accounts[name]
 	h.guard.RUnlock()
 	if !ok {
-		return c.Status(fiber.StatusNotFound).SendString("account not found")
+		return c.Status(fiber.StatusNotFound).SendString("Account not found")
 	}
 	resp := dto.GetAccountResponse{
 		Name:   acc.Name,
@@ -68,12 +66,15 @@ func (h *Handler) GetAccount(c *fiber.Ctx) error {
 func (h *Handler) ChangeAccount(c *fiber.Ctx) error {
 	req := new(dto.ChangeAccountRequest)
 	if err := c.BodyParser(&req); err != nil {
-		c.Context().Logger().Printf("error: %s\n", err)
+		return c.SendString(fmt.Sprintf("errors while parsing the request: %s", err))
+	}
+	if len(req.Name) == 0 || len(req.NewName) == 0 {
+		return c.SendString("Can't have empty name")
 	}
 	h.guard.Lock()
 	if _, ok := h.accounts[req.Name]; !ok {
 		h.guard.Unlock()
-		return c.SendString(fmt.Sprintf("no such entry: %s", req.Name))
+		return c.SendString(fmt.Sprintf("Account '%s' not found", req.Name))
 	}
 	amount := h.accounts[req.Name].Amount
 	delete(h.accounts, req.Name)
@@ -89,31 +90,34 @@ func (h *Handler) ChangeAccount(c *fiber.Ctx) error {
 func (h *Handler) PatchAccount(c *fiber.Ctx) error {
 	req := new(dto.PatchAccountRequest)
 	if err := c.BodyParser(&req); err != nil {
-		c.Context().Logger().Printf("error: %s\n", err)
+		return c.SendString(fmt.Sprintf("errors while parsing the request: %s", err))
+	}
+	if len(req.Name) == 0 {
+		return c.SendString("Can't have empty name")
 	}
 	h.guard.Lock()
 	if _, ok := h.accounts[req.Name]; !ok {
 		h.guard.Unlock()
-		return c.SendString(fmt.Sprintf("no such entry: %s", req.Name))
+		return c.SendString(fmt.Sprintf("Account '%s' not found", req.Name))
 	}
 	h.accounts[req.Name].Amount = req.Amount
 	h.guard.Unlock()
 	return c.SendStatus(fiber.StatusOK)
 }
 
+// Удалить аккаунт
 func (h *Handler) DeleteAccount(c *fiber.Ctx) error {
 	req := new(dto.DeleteAccountRequest)
-	// name := c.Params("name")
-	// log.Println(req)
-	// fmt.Println(req)
 	if err := c.BodyParser(&req); err != nil {
-		c.Context().Logger().Printf("error: %s\n", err)
+		return c.SendString(fmt.Sprintf("errors while parsing the request: %s", err))
+	}
+	if len(req.Name) == 0 {
+		return c.SendString("Can't have empty name")
 	}
 	h.guard.Lock()
-	// fmt.Println(name)
 	if _, ok := h.accounts[req.Name]; !ok {
 		h.guard.Unlock()
-		return c.SendString(fmt.Sprintf("no such entry: %s", req.Name))
+		return c.SendString(fmt.Sprintf("Account '%s' not found", req.Name))
 	}
 	delete(h.accounts, req.Name)
 	h.guard.Unlock()

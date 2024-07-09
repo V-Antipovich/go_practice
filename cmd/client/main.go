@@ -57,8 +57,6 @@ func main() {
 	}
 }
 
-// TODO: validate input in each func
-
 func (cmd *Command) create() error {
 	reqBody := dto.CreateAccountRequest{
 		Name:   cmd.Name,
@@ -83,7 +81,6 @@ func (cmd *Command) create() error {
 	if len(errs) > 0 {
 		return fmt.Errorf("errors: %s", errs)
 	}
-
 	if code == fiber.StatusCreated {
 		return nil
 	}
@@ -122,16 +119,16 @@ func (cmd *Command) patch() error {
 	if err != nil {
 		return fmt.Errorf("json marshall failed: %w", err)
 	}
-	a := fiber.AcquireAgent()
-	a.Add("Content-Type", "application/json")
-	req := a.Request()
+	agent := fiber.AcquireAgent()
+	agent.Add("Content-Type", "application/json")
+	req := agent.Request()
 	req.Header.SetMethod(fiber.MethodPatch)
-	a.Body(data)
+	agent.Body(data)
 	req.SetRequestURI(fmt.Sprintf("http://%s:%d/account/patch", cmd.Host, cmd.Port))
-	if err := a.Parse(); err != nil {
+	if err := agent.Parse(); err != nil {
 		return fmt.Errorf("req issues: %w", err)
 	}
-	code, respBody, errs := a.Bytes()
+	code, respBody, errs := agent.Bytes()
 	if len(errs) > 0 {
 		return fmt.Errorf("errors: %s", errs)
 	}
@@ -139,7 +136,7 @@ func (cmd *Command) patch() error {
 		return nil
 	}
 	defer func() {
-		_ = req.CloseBodyStream()
+		_ = agent.Request().CloseBodyStream()
 	}()
 	return fmt.Errorf("response error %s", respBody)
 }
@@ -153,16 +150,16 @@ func (cmd *Command) change() error {
 	if err != nil {
 		return fmt.Errorf("json marshall failed: %w", err)
 	}
-	a := fiber.AcquireAgent()
-	a.Add("Content-Type", "application/json")
-	req := a.Request()
+	agent := fiber.AcquireAgent()
+	agent.Add("Content-Type", "application/json")
+	req := agent.Request()
 	req.Header.SetMethod(fiber.MethodPost)
-	a.Body(data)
+	agent.Body(data)
 	req.SetRequestURI(fmt.Sprintf("http://%s:%d/account/change", cmd.Host, cmd.Port))
-	if err := a.Parse(); err != nil {
+	if err := agent.Parse(); err != nil {
 		return fmt.Errorf("req issues: %w", err)
 	}
-	code, respBody, errs := a.Bytes()
+	code, respBody, errs := agent.Bytes()
 	if len(errs) > 0 {
 		return fmt.Errorf("errors: %s", errs)
 	}
@@ -170,7 +167,7 @@ func (cmd *Command) change() error {
 		return nil
 	}
 	defer func() {
-		_ = req.CloseBodyStream()
+		_ = agent.Request().CloseBodyStream()
 	}()
 	return fmt.Errorf("response error %s", respBody)
 }
@@ -202,5 +199,5 @@ func (cmd *Command) del() error {
 	defer func() {
 		_ = req.CloseBodyStream()
 	}()
-	return fmt.Errorf("response error %s", body)
+	return fmt.Errorf("response error: %s", body)
 }
