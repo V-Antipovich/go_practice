@@ -1,0 +1,26 @@
+syntax="proto3";
+
+// package accounts;
+option go_package = "go_practice/grpc_app/accounts";
+
+message Account {
+    string name = 1;
+    int64 amount = 2;
+}
+
+message ChangeAccount {
+    string name = 1;
+    string newname = 2;
+}
+
+message Name {
+    string name = 1;
+}
+
+service Bank {
+    rpc CreateAccount(Account) returns (Name) {}
+    rpc GetAccount(Name) returns (Account) {}
+    rpc UpdateAccount(ChangeAccount) returns (Account) {}
+    rpc PatchAccount(Account) returns (Name) {}
+    rpc DeleteAccount(Name) returns (Name) {}
+}
