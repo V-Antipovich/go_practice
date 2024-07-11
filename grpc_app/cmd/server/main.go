@@ -90,9 +90,9 @@ func (s *server) GetAccount(ctx context.Context, name *pb.Name) (*pb.Account, er
 		return nil, status.Error(codes.NotFound, "No such entry")
 	}
 	return &pb.Account{Name: acc.Name, Amount: int64(acc.Amount)}, nil
-	// return nil, status.Error(codes.Unimplemented, "Not implemented")
 }
 
+// If newname already exists, throw error
 func (s *server) UpdateAccount(ctx context.Context, ac *pb.ChangeAccount) (*pb.Account, error) {
 	if len(ac.Name) == 0 || len(ac.Newname) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Neither old nor new name can be empty")
@@ -123,9 +123,18 @@ func (s *server) PatchAccount(ctx context.Context, ac *pb.Account) (*pb.Name, er
 	db.accounts[ac.Name].Amount = int(ac.Amount)
 	db.guard.Unlock()
 	return &pb.Name{Name: ac.Name}, nil
-	// return nil, status.Error(codes.Unimplemented, "Not implemented")
 }
 
-func (s *server) DeleteAccount(context.Context, *pb.Name) (*pb.Name, error) {
-	return nil, status.Error(codes.Unimplemented, "Not implemented")
+func (s *server) DeleteAccount(ctx context.Context, name *pb.Name) (*pb.Name, error) {
+	if len(name.Name) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Can't have empty name")
+	}
+	db.guard.Lock()
+	if _, ok := db.accounts[name.Name]; !ok {
+		db.guard.Unlock()
+		return nil, status.Error(codes.NotFound, "No such entry")
+	}
+	delete(db.accounts, name.Name)
+	db.guard.Unlock()
+	return &pb.Name{Name: name.Name}, nil
 }

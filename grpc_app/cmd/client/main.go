@@ -98,6 +98,13 @@ func main() {
 		} else {
 			fmt.Println("Changed amount of account", r.Name)
 		}
+	case "delete":
+		r, err := c.DeleteAccount(ctx, &pb.Name{Name: cmd.Name})
+		if err != nil {
+			fmt.Printf("Errors: %v", err)
+		} else {
+			fmt.Println("Deleted account", r.Name)
+		}
 		// return c.getQ(ctx *context.Context)
 	// case "delete":
 	// 	return c.del(ctx *context.Context)
