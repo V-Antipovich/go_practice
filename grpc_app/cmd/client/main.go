@@ -82,6 +82,14 @@ func main() {
 		} else {
 			fmt.Println("Account:", r.Name, r.Amount)
 		}
+	case "change":
+		r, err := c.UpdateAccount(ctx, &pb.ChangeAccount{
+			Name: cmd.Name, Newname: cmd.NewName})
+		if err != nil {
+			fmt.Printf("Errors: %v", err)
+		} else {
+			fmt.Println("New name set for the account:", r.Name)
+		}
 	case "patch":
 		r, err := c.PatchAccount(ctx, &pb.Account{
 			Name: cmd.Name, Amount: int64(cmd.Amount)})
