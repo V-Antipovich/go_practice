@@ -97,8 +97,19 @@ func (s *server) UpdateAccount(context.Context, *pb.ChangeAccount) (*pb.Account,
 	return nil, status.Error(codes.Unimplemented, "Not implemented")
 }
 
-func (s *server) PatchAccount(context.Context, *pb.Account) (*pb.Name, error) {
-	return nil, status.Error(codes.Unimplemented, "Not implemented")
+func (s *server) PatchAccount(ctx context.Context, ac *pb.Account) (*pb.Name, error) {
+	if len(ac.Name) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Can't have empty name")
+	}
+	db.guard.Lock()
+	if _, ok := db.accounts[ac.Name]; !ok {
+		db.guard.Unlock()
+		return nil, status.Error(codes.NotFound, "No such entry")
+	}
+	db.accounts[ac.Name].Amount = int(ac.Amount)
+	db.guard.Unlock()
+	return &pb.Name{Name: ac.Name}, nil
+	// return nil, status.Error(codes.Unimplemented, "Not implemented")
 }
 
 func (s *server) DeleteAccount(context.Context, *pb.Name) (*pb.Name, error) {

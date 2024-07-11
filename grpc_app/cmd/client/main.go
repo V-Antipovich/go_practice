@@ -82,6 +82,14 @@ func main() {
 		} else {
 			fmt.Println("Account:", r.Name, r.Amount)
 		}
+	case "patch":
+		r, err := c.PatchAccount(ctx, &pb.Account{
+			Name: cmd.Name, Amount: int64(cmd.Amount)})
+		if err != nil {
+			fmt.Printf("Errors: %v", err)
+		} else {
+			fmt.Println("Changed amount of account", r.Name)
+		}
 		// return c.getQ(ctx *context.Context)
 	// case "delete":
 	// 	return c.del(ctx *context.Context)
