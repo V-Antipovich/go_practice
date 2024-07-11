@@ -80,7 +80,17 @@ func (s *server) CreateAccount(ctx context.Context, ac *pb.Account) (*pb.Name, e
 }
 
 func (s *server) GetAccount(ctx context.Context, name *pb.Name) (*pb.Account, error) {
-	return nil, status.Error(codes.Unimplemented, "Not implemented")
+	if len(name.Name) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Can't have empty name")
+	}
+	db.guard.RLock()
+	acc, ok := db.accounts[name.Name]
+	db.guard.RUnlock()
+	if !ok {
+		return nil, status.Error(codes.NotFound, "No such entry")
+	}
+	return &pb.Account{Name: acc.Name, Amount: int64(acc.Amount)}, nil
+	// return nil, status.Error(codes.Unimplemented, "Not implemented")
 }
 
 func (s *server) UpdateAccount(context.Context, *pb.ChangeAccount) (*pb.Account, error) {

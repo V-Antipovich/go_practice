@@ -74,8 +74,15 @@ func main() {
 		} else {
 			fmt.Println(r.GetName())
 		}
-	// case "get":
-	// 	return c.getQ(ctx *context.Context)
+	case "get":
+		r, err := c.GetAccount(ctx, &pb.Name{
+			Name: cmd.Name})
+		if err != nil {
+			fmt.Printf("Errors: %v", err)
+		} else {
+			fmt.Println("Account:", r.Name, r.Amount)
+		}
+		// return c.getQ(ctx *context.Context)
 	// case "delete":
 	// 	return c.del(ctx *context.Context)
 	// case "patch":
