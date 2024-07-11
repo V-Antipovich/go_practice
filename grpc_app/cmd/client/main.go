@@ -18,26 +18,6 @@ type Command struct {
 	NewName string
 }
 
-//	func (cmd *Command) create(ctx *context.Context) error {
-//		r, err :=
-//		return nil
-//	}
-//
-//	func (cmd *Command) getQ(ctx *context.Context) error {
-//		return nil
-//	}
-//
-//	func (cmd *Command) patch(ctx *context.Context) error {
-//		return nil
-//	}
-//
-//	func (cmd *Command) change(ctx *context.Context) error {
-//		return nil
-//	}
-//
-//	func (cmd *Command) del(ctx *context.Context) error {
-//		return nil
-//	}
 func main() {
 	cmdVal := flag.String("cmd", "", "command")
 	nameVal := flag.String("name", "", "name of the account")
@@ -45,8 +25,6 @@ func main() {
 	newNameVal := flag.String("newname", "", "new name of the account")
 	flag.Parse()
 	cmd := Command{
-		// Port:    *portVal,
-		// Host:    *hostVal,
 		Cmd:     *cmdVal,
 		Name:    *nameVal,
 		Amount:  *ammountVal,
@@ -59,18 +37,14 @@ func main() {
 	defer conn.Close()
 	c := pb.NewBankClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	// if err := cmd.Do(ctx); err != nil {
-	// 	panic(err)
-	// }
 	defer cancel()
 	switch cmd.Cmd {
 	case "create":
-		// return c.create(ctx *context.Context)
 		r, err := c.CreateAccount(ctx, &pb.Account{
 			Name:   cmd.Name,
 			Amount: int64(cmd.Amount)})
 		if err != nil {
-			fmt.Printf("Errors: %v", err)
+			fmt.Printf("Errors: %v\n", err)
 		} else {
 			fmt.Println(r.GetName())
 		}
@@ -78,7 +52,7 @@ func main() {
 		r, err := c.GetAccount(ctx, &pb.Name{
 			Name: cmd.Name})
 		if err != nil {
-			fmt.Printf("Errors: %v", err)
+			fmt.Printf("Errors: %v\n", err)
 		} else {
 			fmt.Println("Account:", r.Name, r.Amount)
 		}
@@ -86,7 +60,7 @@ func main() {
 		r, err := c.UpdateAccount(ctx, &pb.ChangeAccount{
 			Name: cmd.Name, Newname: cmd.NewName})
 		if err != nil {
-			fmt.Printf("Errors: %v", err)
+			fmt.Printf("Errors: %v\n", err)
 		} else {
 			fmt.Println("New name set for the account:", r.Name)
 		}
@@ -94,24 +68,17 @@ func main() {
 		r, err := c.PatchAccount(ctx, &pb.Account{
 			Name: cmd.Name, Amount: int64(cmd.Amount)})
 		if err != nil {
-			fmt.Printf("Errors: %v", err)
+			fmt.Printf("Errors: %v\n", err)
 		} else {
 			fmt.Println("Changed amount of account", r.Name)
 		}
 	case "delete":
 		r, err := c.DeleteAccount(ctx, &pb.Name{Name: cmd.Name})
 		if err != nil {
-			fmt.Printf("Errors: %v", err)
+			fmt.Printf("Errors: %v\n", err)
 		} else {
 			fmt.Println("Deleted account", r.Name)
 		}
-		// return c.getQ(ctx *context.Context)
-	// case "delete":
-	// 	return c.del(ctx *context.Context)
-	// case "patch":
-	// 	return c.patch(ctx *context.Context)
-	// case "change":
-	// 	return c.change(ctx *context.Context)
 	default:
 		fmt.Printf("unknown command: %s", cmd.Cmd)
 	}

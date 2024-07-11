@@ -5,15 +5,12 @@ import (
 	"net"
 	"sync"
 
-	// "go_prac/fiber_app/accounts"
 	pb "go_prac/grpc_app/accounts"
 	"go_prac/grpc_app/accounts/models"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-
-	// "google.golang.org/grpc/profiling/proto"
 	"google.golang.org/grpc/status"
 )
 
@@ -22,27 +19,10 @@ type server struct {
 	pb.UnimplementedBankServer
 }
 
-// mustEmbedUnimplementedBankServer implements accounts.BankServer.
-// func (s *server) mustEmbedUnimplementedBankServer() {
-// 	panic("unimplemented")
-// }
-
-// mustEmbedUnimplementedBankServer implements accounts.BankServer.
-// func (s *server) mustEmbedUnimplementedBankServer() {
-// 	panic("unimplemented")
-// }
-
 type LocalStorage struct {
 	accounts map[string]*models.Account
 	guard    *sync.RWMutex
 }
-
-// func New() *LocalStorage {
-// 	return &LocalStorage{
-// 		accounts: make(map[string]*models.Account),
-// 		guard:    &sync.RWMutex{},
-// 	}
-// }
 
 var db = LocalStorage{
 	accounts: make(map[string]*models.Account),
@@ -101,6 +81,10 @@ func (s *server) UpdateAccount(ctx context.Context, ac *pb.ChangeAccount) (*pb.A
 	if _, ok := db.accounts[ac.Name]; !ok {
 		db.guard.Unlock()
 		return nil, status.Error(codes.NotFound, "No such entry")
+	}
+	if _, ok := db.accounts[ac.Newname]; ok {
+		db.guard.Unlock()
+		return nil, status.Error(codes.AlreadyExists, "Such name is already present")
 	}
 	amount := db.accounts[ac.Name].Amount
 	delete(db.accounts, ac.Name)
