@@ -67,24 +67,10 @@ func (s *server) CreateAccount(ctx context.Context, ac *pb.Account) (*pb.Name, e
 	if len(ac.Name) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Can't have empty name")
 	}
-	// db.guard.Lock()
-
 	_, err := DB.ExecContext(ctx, "INSERT INTO accounts(name, amount) VALUES($1, $2);", ac.Name, ac.Amount)
-	// defer res.Close()
 	if err != nil {
 		return nil, status.Error(codes.Canceled, fmt.Sprintf("Problems while creating a new user: %v", err))
 	}
-	// DB.
-
-	// if _, ok := db.accounts[ac.Name]; ok {
-	// 	db.guard.Unlock()
-	// 	return nil, status.Error(codes.FailedPrecondition, "Account is already present")
-	// }
-	// db.accounts[ac.Name] = &models.Account{
-	// 	Name:   ac.Name,
-	// 	Amount: int(ac.Amount),
-	// }
-	// db.guard.Unlock()
 	return &pb.Name{Name: ac.Name}, nil
 }
 
@@ -104,27 +90,31 @@ func (s *server) GetAccount(ctx context.Context, name *pb.Name) (*pb.Account, er
 	return &pb.Account{Name: accName, Amount: int64(accAmount)}, nil
 }
 
-// If newname already exists, throw error
 func (s *server) UpdateAccount(ctx context.Context, ac *pb.ChangeAccount) (*pb.Account, error) {
 	if len(ac.Name) == 0 || len(ac.Newname) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Neither old nor new name can be empty")
 	}
-	db.guard.Lock()
-	if _, ok := db.accounts[ac.Name]; !ok {
-		db.guard.Unlock()
-		return nil, status.Error(codes.NotFound, "No such entry")
+	_, err := DB.ExecContext(ctx, "UPDATE accounts SET name=$1 WHERE name=$2", ac.Newname, ac.Name)
+	if err != nil {
+		return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not update: %v", err))
 	}
-	if _, ok := db.accounts[ac.Newname]; ok {
-		db.guard.Unlock()
-		return nil, status.Error(codes.AlreadyExists, "Such name is already present")
-	}
-	amount := db.accounts[ac.Name].Amount
-	delete(db.accounts, ac.Name)
-	db.accounts[ac.Newname] = &models.Account{
-		Name: ac.Newname, Amount: amount,
-	}
-	db.guard.Unlock()
-	return &pb.Account{Name: ac.Newname, Amount: int64(amount)}, nil
+
+	// db.guard.Lock()
+	// if _, ok := db.accounts[ac.Name]; !ok {
+	// 	db.guard.Unlock()
+	// 	return nil, status.Error(codes.NotFound, "No such entry")
+	// }
+	// if _, ok := db.accounts[ac.Newname]; ok {
+	// 	db.guard.Unlock()
+	// 	return nil, status.Error(codes.AlreadyExists, "Such name is already present")
+	// }
+	// amount := db.accounts[ac.Name].Amount
+	// delete(db.accounts, ac.Name)
+	// db.accounts[ac.Newname] = &models.Account{
+	// 	Name: ac.Newname, Amount: amount,
+	// }
+	// db.guard.Unlock()
+	return &pb.Account{Name: ac.Newname}, nil
 }
 
 func (s *server) PatchAccount(ctx context.Context, ac *pb.Account) (*pb.Name, error) {

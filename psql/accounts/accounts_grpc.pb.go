@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.4.0
 // - protoc             v5.27.2
-// source: grpc_app/accounts/accounts.proto
+// source: psql/accounts/accounts.proto
 
 package accounts
 
@@ -32,7 +32,7 @@ const (
 type BankClient interface {
 	CreateAccount(ctx context.Context, in *Account, opts ...grpc.CallOption) (*Name, error)
 	GetAccount(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Account, error)
-	UpdateAccount(ctx context.Context, in *ChangeAccount, opts ...grpc.CallOption) (*Account, error)
+	UpdateAccount(ctx context.Context, in *ChangeAccount, opts ...grpc.CallOption) (*Name, error)
 	PatchAccount(ctx context.Context, in *Account, opts ...grpc.CallOption) (*Name, error)
 	DeleteAccount(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Name, error)
 }
@@ -65,9 +65,9 @@ func (c *bankClient) GetAccount(ctx context.Context, in *Name, opts ...grpc.Call
 	return out, nil
 }
 
-func (c *bankClient) UpdateAccount(ctx context.Context, in *ChangeAccount, opts ...grpc.CallOption) (*Account, error) {
+func (c *bankClient) UpdateAccount(ctx context.Context, in *ChangeAccount, opts ...grpc.CallOption) (*Name, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Account)
+	out := new(Name)
 	err := c.cc.Invoke(ctx, Bank_UpdateAccount_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (c *bankClient) DeleteAccount(ctx context.Context, in *Name, opts ...grpc.C
 type BankServer interface {
 	CreateAccount(context.Context, *Account) (*Name, error)
 	GetAccount(context.Context, *Name) (*Account, error)
-	UpdateAccount(context.Context, *ChangeAccount) (*Account, error)
+	UpdateAccount(context.Context, *ChangeAccount) (*Name, error)
 	PatchAccount(context.Context, *Account) (*Name, error)
 	DeleteAccount(context.Context, *Name) (*Name, error)
 	mustEmbedUnimplementedBankServer()
@@ -117,7 +117,7 @@ func (UnimplementedBankServer) CreateAccount(context.Context, *Account) (*Name, 
 func (UnimplementedBankServer) GetAccount(context.Context, *Name) (*Account, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccount not implemented")
 }
-func (UnimplementedBankServer) UpdateAccount(context.Context, *ChangeAccount) (*Account, error) {
+func (UnimplementedBankServer) UpdateAccount(context.Context, *ChangeAccount) (*Name, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateAccount not implemented")
 }
 func (UnimplementedBankServer) PatchAccount(context.Context, *Account) (*Name, error) {
@@ -258,5 +258,5 @@ var Bank_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "grpc_app/accounts/accounts.proto",
+	Metadata: "psql/accounts/accounts.proto",
 }

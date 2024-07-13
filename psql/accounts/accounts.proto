@@ -20,7 +20,7 @@ message Name {
 service Bank {
     rpc CreateAccount(Account) returns (Name) {}
     rpc GetAccount(Name) returns (Account) {}
-    rpc UpdateAccount(ChangeAccount) returns (Account) {}
+    rpc UpdateAccount(ChangeAccount) returns (Name) {}
     rpc PatchAccount(Account) returns (Name) {}
     rpc DeleteAccount(Name) returns (Name) {}
 }
