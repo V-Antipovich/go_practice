@@ -46,7 +46,7 @@ func main() {
 		if err != nil {
 			fmt.Printf("Errors: %v\n", err)
 		} else {
-			fmt.Println(r.GetName())
+			fmt.Println("Created account", r.GetName())
 		}
 	case "get":
 		r, err := c.GetAccount(ctx, &pb.Name{

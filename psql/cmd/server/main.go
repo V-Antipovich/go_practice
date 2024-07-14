@@ -78,9 +78,13 @@ func (s *server) UpdateAccount(ctx context.Context, ac *pb.ChangeAccount) (*pb.A
 	if len(ac.Name) == 0 || len(ac.Newname) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Neither old nor new name can be empty")
 	}
-	_, err := DB.ExecContext(ctx, "UPDATE accounts SET name=$1 WHERE name=$2", ac.Newname, ac.Name)
-	if err != nil {
-		return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not update: %v", err))
+	res, err := DB.ExecContext(ctx, "UPDATE accounts SET name=$1 WHERE name=$2", ac.Newname, ac.Name)
+	n, err1 := res.RowsAffected()
+	if err != nil || err1 != nil {
+		return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not update: %v %v", err, err1))
+	}
+	if n == 0 {
+		return nil, status.Error(codes.NotFound, "No such entry")
 	}
 	return &pb.Account{Name: ac.Newname}, nil
 }
@@ -91,11 +95,11 @@ func (s *server) PatchAccount(ctx context.Context, ac *pb.Account) (*pb.Name, er
 	}
 	res, err := DB.ExecContext(ctx, "UPDATE accounts SET amount=$1 WHERE name=$2", ac.Amount, ac.Name)
 	n, err1 := res.RowsAffected()
+	if err != nil || err1 != nil {
+		return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not patch account: %v %v", err, err1))
+	}
 	if n == 0 {
 		return nil, status.Error(codes.NotFound, "No such entry")
-	}
-	if err != nil || err1 != nil {
-		return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not patch account: %v", err))
 	}
 	return &pb.Name{Name: ac.Name}, nil
 }
