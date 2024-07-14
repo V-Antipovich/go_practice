@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"sync"
 
 	pb "go_prac/grpc_app/accounts"
-	"go_prac/grpc_app/accounts/models"
 
 	_ "github.com/lib/pq"
 	"golang.org/x/net/context"
@@ -22,20 +20,7 @@ type server struct {
 	pb.UnimplementedBankServer
 }
 
-type LocalStorage struct {
-	accounts map[string]*models.Account
-	guard    *sync.RWMutex
-}
-
-// type PSQL struct {
-
-// }
 var DB *sql.DB
-
-var db = LocalStorage{
-	accounts: make(map[string]*models.Account),
-	guard:    &sync.RWMutex{},
-}
 
 const (
 	connectString = "host=0.0.0.0 port=5432 dbname=godb user=vitalii password=1234 sslmode=disable"
@@ -54,7 +39,6 @@ func main() {
 	if err := DB.Ping(); err != nil {
 		log.Fatalf("Could not access db: %v", err)
 	}
-	// DB = base
 	s := server{}
 	grpcServer := grpc.NewServer()
 	pb.RegisterBankServer(grpcServer, &s)
@@ -98,22 +82,6 @@ func (s *server) UpdateAccount(ctx context.Context, ac *pb.ChangeAccount) (*pb.A
 	if err != nil {
 		return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not update: %v", err))
 	}
-
-	// db.guard.Lock()
-	// if _, ok := db.accounts[ac.Name]; !ok {
-	// 	db.guard.Unlock()
-	// 	return nil, status.Error(codes.NotFound, "No such entry")
-	// }
-	// if _, ok := db.accounts[ac.Newname]; ok {
-	// 	db.guard.Unlock()
-	// 	return nil, status.Error(codes.AlreadyExists, "Such name is already present")
-	// }
-	// amount := db.accounts[ac.Name].Amount
-	// delete(db.accounts, ac.Name)
-	// db.accounts[ac.Newname] = &models.Account{
-	// 	Name: ac.Newname, Amount: amount,
-	// }
-	// db.guard.Unlock()
 	return &pb.Account{Name: ac.Newname}, nil
 }
 
@@ -121,13 +89,10 @@ func (s *server) PatchAccount(ctx context.Context, ac *pb.Account) (*pb.Name, er
 	if len(ac.Name) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Can't have empty name")
 	}
-	db.guard.Lock()
-	if _, ok := db.accounts[ac.Name]; !ok {
-		db.guard.Unlock()
-		return nil, status.Error(codes.NotFound, "No such entry")
+	_, err := DB.ExecContext(ctx, "UPDATE accounts SET amount=$1 WHERE name=$2", ac.Amount, ac.Name)
+	if err != nil {
+		return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not patch account: %v", err))
 	}
-	db.accounts[ac.Name].Amount = int(ac.Amount)
-	db.guard.Unlock()
 	return &pb.Name{Name: ac.Name}, nil
 }
 
@@ -135,12 +100,35 @@ func (s *server) DeleteAccount(ctx context.Context, name *pb.Name) (*pb.Name, er
 	if len(name.Name) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Can't have empty name")
 	}
-	db.guard.Lock()
-	if _, ok := db.accounts[name.Name]; !ok {
-		db.guard.Unlock()
-		return nil, status.Error(codes.NotFound, "No such entry")
+	rb, err := DB.Query("SELECT COUNT(*) FROM accounts")
+	if err != nil {
+		return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not delete account: %v", err))
 	}
-	delete(db.accounts, name.Name)
-	db.guard.Unlock()
+	defer rb.Close()
+	before := 0
+	for rb.Next() {
+		if err := rb.Scan(&before); err != nil {
+			return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not delete account: %v", err))
+		}
+	}
+	_, errD := DB.ExecContext(ctx, "DELETE FROM accounts WHERE name=$1", name.Name)
+
+	ra, err := DB.Query("SELECT COUNT(*) FROM accounts")
+	if err != nil {
+		return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not delete account: %v", err))
+	}
+	defer ra.Close()
+	after := 0
+	for ra.Next() {
+		if err := ra.Scan(&after); err != nil {
+			return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not delete account: %v", err))
+		}
+	}
+	log.Println(before, after)
+	if after == before {
+		return nil, status.Error(codes.NotFound, "No such entry")
+	} else if errD != nil {
+		return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not delete account: %v", err))
+	}
 	return &pb.Name{Name: name.Name}, nil
 }
