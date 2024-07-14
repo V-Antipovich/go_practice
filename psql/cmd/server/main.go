@@ -89,8 +89,12 @@ func (s *server) PatchAccount(ctx context.Context, ac *pb.Account) (*pb.Name, er
 	if len(ac.Name) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Can't have empty name")
 	}
-	_, err := DB.ExecContext(ctx, "UPDATE accounts SET amount=$1 WHERE name=$2", ac.Amount, ac.Name)
-	if err != nil {
+	res, err := DB.ExecContext(ctx, "UPDATE accounts SET amount=$1 WHERE name=$2", ac.Amount, ac.Name)
+	n, err1 := res.RowsAffected()
+	if n == 0 {
+		return nil, status.Error(codes.NotFound, "No such entry")
+	}
+	if err != nil || err1 != nil {
 		return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not patch account: %v", err))
 	}
 	return &pb.Name{Name: ac.Name}, nil
@@ -100,32 +104,8 @@ func (s *server) DeleteAccount(ctx context.Context, name *pb.Name) (*pb.Name, er
 	if len(name.Name) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Can't have empty name")
 	}
-	rb, err := DB.Query("SELECT COUNT(*) FROM accounts")
-	if err != nil {
-		return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not delete account: %v", err))
-	}
-	defer rb.Close()
-	before := 0
-	for rb.Next() {
-		if err := rb.Scan(&before); err != nil {
-			return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not delete account: %v", err))
-		}
-	}
-	_, errD := DB.ExecContext(ctx, "DELETE FROM accounts WHERE name=$1", name.Name)
-
-	ra, err := DB.Query("SELECT COUNT(*) FROM accounts")
-	if err != nil {
-		return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not delete account: %v", err))
-	}
-	defer ra.Close()
-	after := 0
-	for ra.Next() {
-		if err := ra.Scan(&after); err != nil {
-			return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not delete account: %v", err))
-		}
-	}
-	log.Println(before, after)
-	if after == before {
+	res, errD := DB.ExecContext(ctx, "DELETE FROM accounts WHERE name=$1", name.Name)
+	if n, err := res.RowsAffected(); n == 0 {
 		return nil, status.Error(codes.NotFound, "No such entry")
 	} else if errD != nil {
 		return nil, status.Error(codes.Canceled, fmt.Sprintf("Could not delete account: %v", err))
